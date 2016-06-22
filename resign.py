@@ -51,6 +51,10 @@ def isapk(filename):
 def isipa(filename):
     return 'ipa' in filename.split('.')[-1]
 
+# 重命名
+def newname(prefex, oldname):
+    index=oldname.rindex('.')
+    return oldname[:index] + '_' + prefex + oldname[index:]
 
 # main
 if len(sys.argv) <> 3:
@@ -58,7 +62,16 @@ if len(sys.argv) <> 3:
     print_green('eg. python resign.py 2333 d:/redbird.apk')
     sys.exit(1)
 
-TARGET_NAME = sys.argv[2]
-print_red(isipa(TARGET_NAME))
-print_red(isapk(TARGET_NAME))
+ORIGIN_PACK = sys.argv[2]
+SIGN_CODE = sys.argv[1]
+NEW_PACK = newname(SIGN_CODE, ORIGIN_PACK)
+UNPACK_DIR = os.path.dirname(os.path.abspath(ORIGIN_PACK))
+
+print_red(NEW_PACK)
+print_red(UNPACK_DIR)
+
+unzip(ORIGIN_PACK, UNPACK_DIR)
+
+
+
 
