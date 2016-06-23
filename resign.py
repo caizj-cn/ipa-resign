@@ -37,11 +37,17 @@ def unzip(src,des):
 
 # 高亮输出
 def print_red(msg):
-    print 'error: ', '\033[0;31m', msg, '\033[0m'
+    if isWindows():
+        print 'error: ', msg
+    else:
+        print 'error: ', '\033[0;31m', msg, '\033[0m'
     return
 
 def print_green(msg):
-    print '\033[0;32m', msg, '\033[0m'
+    if isWindows():
+        print msg
+    else:
+        print '\033[0;32m', msg, '\033[0m'
     return
 
 # 是否apk
@@ -65,7 +71,7 @@ def findconfig(dirname):
                 return os.path.join(root, name)
     
     print_red('安装包'+ dirname + '中' +'检索config.json文件失败')
-    return 0
+    sys.exit(0)
 
 # 删除文件夹
 def removeDir(dirname):
@@ -115,6 +121,10 @@ def removeSign():
 def signpack(packname):
     execstr = "jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore " + KEYSTORE + " -storepass " + PASSWORD + " " + NEW_PACK + " " + ALIAS
     status = os.system(execstr)
+    if status == 0:
+        print_green('签名成功！')
+    else:
+        print_red('签名失败！')
 
 # main
 if len(sys.argv) <> 3:
@@ -164,6 +174,7 @@ print_green(NEW_PACK)
 
 # 签名
 print_green('重新签名中...')
+signpack(NEW_PACK)
 
 # 清理作案现场
 restoreENV()
