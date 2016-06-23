@@ -127,7 +127,9 @@ def removeSign():
                     print_green('签名删除成功！')
             for filename in files:
                 if filename == 'embedded.mobileprovision':
-                    print_green('TODO')
+                    filename = os.path.join(root, filename)
+                    os.system("cp " + IPA_PROV + " " + filename)
+                    print_green('替换PROV成功！')
 
     else:
         print_red('此脚本仅能处理ipa和apk！')
@@ -143,8 +145,10 @@ def signapk(packname):
     else:
         print_red('签名失败！')
 
+# 签名ipa
 def signipa(packname):
     print_red('TODO')
+    print_red(packname)
 
 # 检查签名文件是否存在
 def checksigner():
@@ -222,18 +226,27 @@ writeJson(CONFIG_FILE, 'agent', SIGN_CODE)
 print_green('删除签名...')
 removeSign()
 
-# 压缩
-print_green('重新打包中...')
-zip_dir(UNPACK_DIR, NEW_PACK)
-print_green(NEW_PACK)
-
-# 签名
-print_green('重新签名中...')
+#####################
+# 安卓重签名
 if isapk(ORIGIN_PACK):
+    # 压缩
+    print_green('重新打包中...')
+    zip_dir(UNPACK_DIR, NEW_PACK)
+    print_green(NEW_PACK)
+    # 签名
+    print_green('重新签名中...')
     signapk(NEW_PACK)
+    
+#####################
+# iOS重签名
 elif isipa(ORIGIN_PACK):
+    # 签名
+    print_green('重新签名中...')
     signipa(NEW_PACK)
-
+    # 压缩
+    print_green('重新打包中...')
+    zip_dir(UNPACK_DIR, NEW_PACK)
+    print_green(NEW_PACK)
 
 # 清理作案现场
 restoreENV()
