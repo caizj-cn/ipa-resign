@@ -106,25 +106,65 @@ def writeJson(filename, parname, value):
 
 # 删除签名
 def removeSign():
-    for root, dirs, files in os.walk(UNPACK_DIR):
-        for dir in dirs:
-            if dir=='META-INF':
-                fulldir = os.path.join(root, dir)
-                print_green('删除签名...')
-                print_green(fulldir)
-                removeDir(fulldir)
-                print_green('签名删除成功！')
-                return
-    print_red('签名删除失败！')
+    if isapk(ORIGIN_PACK):
+        for root, dirs, files in os.walk(UNPACK_DIR):
+            for dirname in dirs:
+                if dirname=='META-INF':
+                    fulldir = os.path.join(root, dirname)
+                    print_green(fulldir)
+                    removeDir(fulldir)
+                    print_green('签名删除成功！')
+                    return
+        print_red('签名删除失败！')
+    
+    elif isipa(ORIGIN_PACK):
+        for root, dirs, files in os.walk(UNPACK_DIR):
+            for dirname in dirs:
+                if dirname == '_CodeSignature':
+                    fulldir = os.path.join(root, dirname)
+                    print_green(fulldir)
+                    removeDir(fulldir)
+                    print_green('签名删除成功！')
+            for filename in files:
+                if filename == 'embedded.mobileprovision':
+                    print_green('TODO')
 
-# 签名
-def signpack(packname):
+    else:
+        print_red('此脚本仅能处理ipa和apk！')
+        sys.exit(0)
+
+# 签名apk
+def signapk(packname):
     execstr = "jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore " + KEYSTORE + " -storepass " + PASSWORD + " " + NEW_PACK + " " + ALIAS
     status = os.system(execstr)
     if status == 0:
         print_green('签名成功！')
+        print_green(packname)
     else:
         print_red('签名失败！')
+
+def signipa(packname):
+    print_red('TODO')
+
+# 检查签名文件是否存在
+def checksigner():
+    if isapk(ORIGIN_PACK):
+        if not os.path.exists(KEYSTORE):
+            print_red('签名文件检索失败:')
+            print_red(KEYSTORE)
+            sys.exit(0)
+
+    elif isipa(ORIGIN_PACK):
+        if not os.path.exists(IPA_PROV):
+            print_red('签名文件检索失败:')
+            print_red(IPA_PROV)
+            sys.exit(0)
+
+        # ipa签名只能在mac上执行
+        if isWindows():
+            print_red('ipa包重签名只能在mac上进行')
+            sys.exit(0)
+
 
 
 ####################
@@ -136,15 +176,13 @@ if len(sys.argv) <> 3:
     print_green('eg. python resign.py 2333 d:/redbird.apk')
     sys.exit(1)
 
-# 签名账号
-KEYSTORE = 'customer-hn787878-20160315.keystore'
+# apk签名
+KEYSTORE = os.path.join(os.getcwd(), 'customer-hn787878-20160315.keystore')
 ALIAS = 'customer'
 PASSWORD = 'hn787878'
 
-if not os.path.exists(KEYSTORE):
-    keystorefullpath = os.path.join(os.getcwd(), KEYSTORE)
-    print_red(keystorefullpath + '签名文件检索失败！')
-    sys.exit(0)
+# ipa签名
+IPA_PROV = os.path.join(os.getcwd(), 'embedded.mobileprovision')
 
 # 母包
 ORIGIN_PACK = sys.argv[2]
@@ -158,11 +196,9 @@ SIGN_CODE = sys.argv[1]
 # 签名包
 NEW_PACK = newname(SIGN_CODE, ORIGIN_PACK)
 
-# ipa签名只能在mac上执行
-if isipa(ORIGIN_PACK):
-    if isWindows():
-        print_red('ipa包重签名只能在mac上进行')
-        sys.exit(0)
+# 检查签名
+print_green('检查签名...')
+checksigner()
 
 # 解压目录
 UNPACK_DIR = NEW_PACK[:NEW_PACK.rindex('.')]
@@ -183,6 +219,7 @@ print_green('写入代理商字段...')
 writeJson(CONFIG_FILE, 'agent', SIGN_CODE)
 
 # 删除旧签名
+print_green('删除签名...')
 removeSign()
 
 # 压缩
@@ -192,8 +229,10 @@ print_green(NEW_PACK)
 
 # 签名
 print_green('重新签名中...')
-signpack(NEW_PACK)
-
+if isapk(ORIGIN_PACK):
+    signapk(NEW_PACK)
+elif isipa(ORIGIN_PACK):
+    signipa(NEW_PACK)
 
 
 # 清理作案现场
