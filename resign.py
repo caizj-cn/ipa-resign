@@ -126,7 +126,10 @@ def signpack(packname):
     else:
         print_red('签名失败！')
 
+
+####################
 # main
+
 if len(sys.argv) <> 3:
     print_red('参数错误')
     print_green('eg. python resign.py 2333 d:/redbird.apk')
@@ -137,8 +140,16 @@ KEYSTORE = 'customer-hn787878-20160315.keystore'
 ALIAS = 'customer'
 PASSWORD = 'hn787878'
 
+if not os.path.exists(KEYSTORE):
+    keystorefullpath = os.path.join(os.getcwd(), KEYSTORE)
+    print_red(keystorefullpath + '签名文件检索失败！')
+    sys.exit(0)
+
 # 母包
 ORIGIN_PACK = sys.argv[2]
+if not os.path.exists(ORIGIN_PACK):
+    print_red(ORIGIN_PACK + '母包文件检索失败！')
+    sys.exit(1)
 
 # 代理商id
 SIGN_CODE = sys.argv[1]
