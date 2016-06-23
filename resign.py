@@ -147,7 +147,7 @@ def signapk(packname):
 
 # 签名ipa
 def signipa(packname):
-    print_red('TODO')
+    execstr = "/usr/bin/codesign -f -s "
     print_red(packname)
 
 # 检查签名文件是否存在
@@ -187,6 +187,7 @@ PASSWORD = 'hn787878'
 
 # ipa签名
 IPA_PROV = os.path.join(os.getcwd(), 'embedded.mobileprovision')
+IPA_CER = 'iPhone Distribution: Beijing TianRuiDiAn Network Technology Co,Ltd.'
 
 # 母包
 ORIGIN_PACK = sys.argv[2]
@@ -226,7 +227,7 @@ writeJson(CONFIG_FILE, 'agent', SIGN_CODE)
 print_green('删除签名...')
 removeSign()
 
-#####################
+####################
 # 安卓重签名
 if isapk(ORIGIN_PACK):
     # 压缩
@@ -236,8 +237,8 @@ if isapk(ORIGIN_PACK):
     # 签名
     print_green('重新签名中...')
     signapk(NEW_PACK)
-    
-#####################
+
+####################
 # iOS重签名
 elif isipa(ORIGIN_PACK):
     # 签名
