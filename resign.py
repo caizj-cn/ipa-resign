@@ -129,6 +129,7 @@ def signpack(packname):
 
 ####################
 # main
+####################
 
 if len(sys.argv) <> 3:
     print_red('参数错误')
@@ -156,6 +157,12 @@ SIGN_CODE = sys.argv[1]
 
 # 签名包
 NEW_PACK = newname(SIGN_CODE, ORIGIN_PACK)
+
+# ipa签名只能在mac上执行
+if isipa(ORIGIN_PACK):
+    if isWindows():
+        print_red('ipa包重签名只能在mac上进行')
+        sys.exit(0)
 
 # 解压目录
 UNPACK_DIR = NEW_PACK[:NEW_PACK.rindex('.')]
@@ -186,6 +193,8 @@ print_green(NEW_PACK)
 # 签名
 print_green('重新签名中...')
 signpack(NEW_PACK)
+
+
 
 # 清理作案现场
 restoreENV()
