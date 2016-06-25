@@ -36,7 +36,9 @@ def unzip(src,des):
 
 
 # 高亮输出
+SYS_ENCODE = sys.getfilesystemencoding()
 def print_red(msg):
+    msg = msg.decode('utf-8').encode(SYS_ENCODE)
     if isWindows():
         print 'error: ', msg
     else:
@@ -44,6 +46,7 @@ def print_red(msg):
     return
 
 def print_green(msg):
+    msg = msg.decode('utf-8').encode(SYS_ENCODE)
     if isWindows():
         print msg
     else:
@@ -149,6 +152,8 @@ def signapk(packname):
         print_green(packname)
     else:
         print_red('签名失败！')
+        print_red('删除失败的签名包...')
+        sys.remove(packname)
 
 # 签名ipa
 def signipa(packname):
@@ -286,5 +291,5 @@ elif isipa(PACK_ORIGIN):
     print_green(PACK_NEW)
 
 # 清理作案现场
-# restoreENV()
+restoreENV()
 
