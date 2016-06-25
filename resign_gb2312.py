@@ -131,6 +131,8 @@ def removeSign():
             for filename in files:
                 if filename == 'embedded.mobileprovision':
                     filename = os.path.join(root, filename)
+                    print_green('替换PROV文件：')
+                    print_green(filename)
                     os.system("cp " + IPA_PROV + " " + filename)
                     print_green('替换PROV成功！')
 
@@ -284,5 +286,5 @@ elif isipa(PACK_ORIGIN):
     print_green(PACK_NEW)
 
 # 清理作案现场
-restoreENV()
+# restoreENV()
 
