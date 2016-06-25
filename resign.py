@@ -5,6 +5,10 @@ import sys, os
 import platform
 import json
 
+# 运行环境默认编码ascii，当写入中文到文件时会因无法编码而出错
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 # 是否windows
 def isWindows():
     return 'Windows' in platform.system()
@@ -38,20 +42,31 @@ def unzip(src,des):
 # 高亮输出
 SYS_ENCODE = sys.getfilesystemencoding()
 def print_red(msg):
+    msg = 'error: ' + msg
+    printlog(msg)
     msg = msg.decode('utf-8').encode(SYS_ENCODE)
     if isWindows():
-        print 'error: ', msg
+        print msg
     else:
-        print 'error: ', '\033[0;31m', msg, '\033[0m'
+        print '\033[0;31m', msg, '\033[0m'
     return
 
 def print_green(msg):
+    printlog(msg)
     msg = msg.decode('utf-8').encode(SYS_ENCODE)
     if isWindows():
         print msg
     else:
         print '\033[0;32m', msg, '\033[0m'
     return
+
+# 输出log
+LOG_FILE = os.path.join(os.getcwd(), 'resign.log')
+def printlog(msg):
+    msg = msg + '\n'
+    fp = open(LOG_FILE, 'a')
+    fp.write(msg)
+    fp.close
 
 # 是否apk
 def isapk(filename):
@@ -232,15 +247,21 @@ IPA_APP = 'MixProject-mobile.app'
 
 # 母包
 PACK_ORIGIN = sys.argv[2]
-if not os.path.exists(PACK_ORIGIN):
-    print_red(PACK_ORIGIN + '母包文件检索失败！')
-    sys.exit(1)
 
 # 代理商id
 AGENT_ID = sys.argv[1]
 
 # 签名包
 PACK_NEW = newname(AGENT_ID, PACK_ORIGIN)
+
+# 日志
+index=PACK_NEW.rindex('.')
+LOG_FILE = PACK_NEW[:index] + '.log'
+
+# 检索母包
+if not os.path.exists(PACK_ORIGIN):
+    print_red(PACK_ORIGIN + '母包文件检索失败！')
+    sys.exit(1)
 
 # 解压目录
 UNPACK_DIR = PACK_NEW[:PACK_NEW.rindex('.')]
