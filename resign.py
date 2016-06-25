@@ -4,6 +4,7 @@ import zipfile
 import sys, os
 import platform
 import json
+import commands
 
 # 运行环境默认编码ascii，当写入中文到文件时会因无法编码而出错
 reload(sys)
@@ -224,7 +225,6 @@ def checksigner():
             sys.exit(0)
 
 
-
 ####################
 # main
 ####################
@@ -309,8 +309,10 @@ elif isipa(PACK_ORIGIN):
     # 压缩
     print_green('重新打包中...')
     zip_dir(UNPACK_DIR, PACK_NEW)
+
+    print_green('打包成功：')
     print_green(PACK_NEW)
 
 # 清理作案现场
-restoreENV()
+# restoreENV()
 
