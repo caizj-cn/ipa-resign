@@ -154,6 +154,12 @@ def signipa(packname, IPA_CER, IPA_ENT, IPA_APP):
     execstr = "/usr/bin/codesign --verify " + IPA_APP
     print_green('验证签名完成！')
 
+####################
+# 获取父目录
+def getpardir(path):
+    newpath = os.path.abspath(path)
+    index = newpath.rindex('/')
+    return newpath[:index]
 
 ####################
 # main
@@ -170,11 +176,15 @@ def main():
         print_green('eg. python resign.py 2333 d:/redbird.apk')
         sys.exit(1)
 
+    ROOT_PATH = os.path.abspath(sys.path[0])
+
     # 代理商id
     AGENT_ID = sys.argv[1]
 
     # 母包 - 包含默认值
-    PACK_ORIGIN = os.path.abspath(os.path.join(os.pardir, 'download/zhixin.apk'))
+    PACK_ORIGIN = os.path.join(getpardir(ROOT_PATH), 'download/zhixin.apk')
+    print_green(sys.path[0])
+
     if len(sys.argv) > 2:
         PACK_ORIGIN = sys.argv[2]
 
@@ -185,14 +195,14 @@ def main():
     # 签名参数
 
     # apk签名
-    APK_KEY = os.path.join(os.getcwd(), 'customer-hn787878-20160315.keystore')
+    APK_KEY = os.path.join(ROOT_PATH, 'customer-hn787878-20160315.keystore')
     APK_ALIAS = 'customer'
     APK_PASS = 'hn787878'
 
     # ipa签名
-    IPA_PROV = os.path.join(os.getcwd(), 'embedded.mobileprovision')
+    IPA_PROV = os.path.join(ROOT_PATH, 'embedded.mobileprovision')
     IPA_CER = 'iPhone Distribution: Beijing TianRuiDiAn Network Technology Co,Ltd.'
-    IPA_ENT = os.path.join(os.getcwd(), 'Entitlements.plist')
+    IPA_ENT = os.path.join(ROOT_PATH, 'Entitlements.plist')
     IPA_APP = 'MixProject-mobile.app'
 
     ####################
