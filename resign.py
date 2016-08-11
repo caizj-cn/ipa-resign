@@ -6,14 +6,12 @@ import platform
 import json
 import commands
 
-# 运行环境默认编码ascii，当写入中文到文件时会因无法编码而出错
-reload(sys)
-sys.setdefaultencoding('utf-8')
-
+####################
 # 是否windows
 def isWindows():
     return 'Windows' in platform.system()
 
+####################
 # zip压缩
 def zip_dir(dirname,zipfilename):
     filelist = []
@@ -32,6 +30,7 @@ def zip_dir(dirname,zipfilename):
     zf.close()
     return
 
+####################
 # zip解压
 def unzip(src,des): 
     zfile = zipfile.ZipFile(src,'r')
@@ -39,7 +38,7 @@ def unzip(src,des):
         zfile.extract(filename,des)
     return
 
-
+####################
 # 高亮输出
 SYS_ENCODE = sys.getfilesystemencoding()
 def print_red(msg):
@@ -52,6 +51,7 @@ def print_red(msg):
         print '\033[0;31m', msg, '\033[0m'
     return
 
+####################
 def print_green(msg):
     printlog(msg)
     msg = msg.decode('utf-8').encode(SYS_ENCODE)
@@ -61,27 +61,32 @@ def print_green(msg):
         print '\033[0;32m', msg, '\033[0m'
     return
 
+####################
 # 输出log
-LOG_FILE = os.path.join(os.getcwd(), 'resign.log')
 def printlog(msg):
+    LOG_FILE = os.path.join(os.getcwd(), 'resign.log')
     msg = msg + '\n'
     fp = open(LOG_FILE, 'a')
     fp.write(msg)
     fp.close
 
+####################
 # 是否apk
 def isapk(filename):
     return 'apk' in filename.split('.')[-1]
 
+####################
 # 是否ipa
 def isipa(filename):
     return 'ipa' in filename.split('.')[-1]
 
+####################
 # 重命名
 def newname(prefex, oldname):
     index=oldname.rindex('.')
     return oldname[:index] + '_' + prefex + oldname[index:]
 
+####################
 # 查找config文件
 def findconfig(dirname):
     for root, dirs, files in os.walk(dirname):
@@ -92,6 +97,7 @@ def findconfig(dirname):
     print_red('安装包'+ dirname + '中' +'检索config.json文件失败')
     sys.exit(0)
 
+####################
 # 删除文件夹
 def removeDir(dirname):
     if isWindows():
@@ -99,12 +105,13 @@ def removeDir(dirname):
     else:
         os.system("rm -rf " + dirname)
 
-
+####################
 # 清理作案现场
-def restoreENV():
+def restoreENV(UNPACK_DIR):
     print_green('清理作案现场...')
     removeDir(UNPACK_DIR)
 
+####################
 # 向json文件中写入指定字段
 def writeJson(filename, parname, value):
     if os.path.isfile(filename):
@@ -123,44 +130,9 @@ def writeJson(filename, parname, value):
     else:
         print_red('文件' + filename + '不存在!')
 
-# 删除签名
-def removeSign():
-    # 安卓apk
-    if isapk(PACK_ORIGIN):
-        for root, dirs, files in os.walk(UNPACK_DIR):
-            for dirname in dirs:
-                if dirname=='META-INF':
-                    fulldir = os.path.join(root, dirname)
-                    print_green(fulldir)
-                    removeDir(fulldir)
-                    print_green('签名删除成功！')
-                    return
-        print_red('签名删除失败！')
-    
-    # iOS ipa
-    elif isipa(PACK_ORIGIN):
-        for root, dirs, files in os.walk(UNPACK_DIR):
-            for dirname in dirs:
-                if dirname == '_CodeSignature':
-                    fulldir = os.path.join(root, dirname)
-                    print_green(fulldir)
-                    removeDir(fulldir)
-                    print_green('签名删除成功！')
-
-            for filename in files:
-                if filename == 'embedded.mobileprovision':
-                    filename = os.path.join(root, filename)
-                    print_green('替换PROV文件：')
-                    print_green(filename)
-                    os.system("cp " + IPA_PROV + " " + filename)
-                    print_green('替换PROV成功！')
-
-    else:
-        print_red('此脚本仅能处理ipa和apk！')
-        sys.exit(0)
-
+####################
 # 签名apk
-def signapk(packname):
+def signapk(packname, APK_KEY, APK_PASS, APK_ALIAS, PACK_NEW):
     execstr = "jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore " + APK_KEY + " -storepass " + APK_PASS + " " + PACK_NEW + " " + APK_ALIAS
     status = os.system(execstr)
     if status == 0:
@@ -171,16 +143,75 @@ def signapk(packname):
         print_red('删除失败的签名包...')
         sys.remove(packname)
 
+####################
 # 签名ipa
-def signipa(packname):
+def signipa(packname, IPA_CER, IPA_ENT, IPA_APP):
     execstr = "/usr/bin/codesign -f -s \"" + IPA_CER + "\" --entitlements " + IPA_ENT + " " + IPA_APP
     os.system(execstr)
     print_green('签名完成！')
     execstr = "/usr/bin/codesign --verify " + IPA_APP
     print_green('验证签名完成！')
 
-# 检查签名文件是否存在
-def checksigner():
+
+####################
+# main
+####################
+def main():
+    # 运行环境默认编码ascii，当写入中文到文件时会因无法编码而出错
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+
+    ####################
+    # 参数解析
+    if len(sys.argv) <> 3:
+        print_red('参数错误')
+        print_green('eg. python resign.py 2333 d:/redbird.apk')
+        sys.exit(1)
+
+    # apk签名
+    APK_KEY = os.path.join(os.getcwd(), 'customer-hn787878-20160315.keystore')
+    APK_ALIAS = 'customer'
+    APK_PASS = 'hn787878'
+
+    # ipa签名
+    IPA_PROV = os.path.join(os.getcwd(), 'embedded.mobileprovision')
+    IPA_CER = 'iPhone Distribution: Beijing TianRuiDiAn Network Technology Co,Ltd.'
+    IPA_ENT = os.path.join(os.getcwd(), 'Entitlements.plist')
+    IPA_APP = 'MixProject-mobile.app'
+
+    # 母包
+    PACK_ORIGIN = sys.argv[2]
+
+    # 代理商id
+    AGENT_ID = sys.argv[1]
+
+    # 签名包名
+    PACK_NEW = newname(AGENT_ID, PACK_ORIGIN)
+
+    ####################
+    # 日志
+    index=PACK_NEW.rindex('.')
+    LOG_FILE = PACK_NEW[:index] + '.log'
+
+    ####################
+    # 检索母包
+    if not os.path.exists(PACK_ORIGIN):
+        print_red(PACK_ORIGIN + '母包文件检索失败！')
+        sys.exit(1)
+
+    ####################
+    # 解压目录
+    UNPACK_DIR = PACK_NEW[:PACK_NEW.rindex('.')]
+    print_green('解包中...')
+    print_green(PACK_ORIGIN)
+    unzip(PACK_ORIGIN, UNPACK_DIR)
+    print_green('成功解压到: ')
+    print_green(UNPACK_DIR)
+
+    ####################
+    # 检查签名
+    print_green('检查签名...')
+
     if isapk(PACK_ORIGIN):
         if not os.path.exists(APK_KEY):
             print_red('签名文件检索失败:')
@@ -212,7 +243,6 @@ def checksigner():
             print_green('找到签名文件：')
             print_green(IPA_ENT)
 
-        global IPA_APP
         for root, dirs, files in os.walk(UNPACK_DIR):
             for dirname in dirs:
                 if IPA_APP == dirname:
@@ -224,95 +254,77 @@ def checksigner():
             print_red(IPA_APP)
             sys.exit(0)
 
+    ####################
+    # 查找配置文件
+    print_green('定位config.json文件...')
+    CONFIG_FILE = findconfig(UNPACK_DIR)
+    print_green('找到配置文件: ')
+    print_green(CONFIG_FILE)
 
-####################
-# main
-####################
+    ####################
+    # 写入代理商字段
+    print_green('写入代理商字段...')
+    writeJson(CONFIG_FILE, 'agent', AGENT_ID)
 
-if len(sys.argv) <> 3:
-    print_red('参数错误')
-    print_green('eg. python resign.py 2333 d:/redbird.apk')
-    sys.exit(1)
+    ####################
+    # 删除旧签名
+    print_green('删除签名...')
 
-# apk签名
-APK_KEY = os.path.join(os.getcwd(), 'customer-hn787878-20160315.keystore')
-APK_ALIAS = 'customer'
-APK_PASS = 'hn787878'
+    # 安卓apk
+    if isapk(PACK_ORIGIN):
+        for root, dirs, files in os.walk(UNPACK_DIR):
+            for dirname in dirs:
+                if dirname=='META-INF':
+                    fulldir = os.path.join(root, dirname)
+                    print_green(fulldir)
+                    removeDir(fulldir)
+                    print_green('签名删除成功！')
+    
+    # iOS ipa
+    elif isipa(PACK_ORIGIN):
+        for root, dirs, files in os.walk(UNPACK_DIR):
+            for dirname in dirs:
+                if dirname == '_CodeSignature':
+                    fulldir = os.path.join(root, dirname)
+                    print_green(fulldir)
+                    removeDir(fulldir)
+                    print_green('签名删除成功！')
 
-# ipa签名
-IPA_PROV = os.path.join(os.getcwd(), 'embedded.mobileprovision')
-IPA_CER = 'iPhone Distribution: Beijing TianRuiDiAn Network Technology Co,Ltd.'
-IPA_ENT = os.path.join(os.getcwd(), 'Entitlements.plist')
-IPA_APP = 'MixProject-mobile.app'
+            for filename in files:
+                if filename == 'embedded.mobileprovision':
+                    filename = os.path.join(root, filename)
+                    print_green('替换PROV文件：')
+                    print_green(filename)
+                    os.system("cp " + IPA_PROV + " " + filename)
+                    print_green('替换PROV成功！')
 
-# 母包
-PACK_ORIGIN = sys.argv[2]
+    ####################
+    # 安卓重签名
+    if isapk(PACK_ORIGIN):
+        # 压缩
+        print_green('重新打包中...')
+        zip_dir(UNPACK_DIR, PACK_NEW)
+        print_green(PACK_NEW)
+        # 签名
+        print_green('重新签名中...')
+        signapk(PACK_NEW, APK_KEY, APK_PASS, APK_ALIAS, PACK_NEW)
 
-# 代理商id
-AGENT_ID = sys.argv[1]
+    ####################
+    # iOS重签名
+    elif isipa(PACK_ORIGIN):
+        # 签名
+        print_green('重新签名中...')
+        signipa(PACK_NEW, IPA_CER, IPA_ENT, IPA_APP)
+        # 压缩
+        print_green('重新打包中...')
+        zip_dir(UNPACK_DIR, PACK_NEW)
 
-# 签名包
-PACK_NEW = newname(AGENT_ID, PACK_ORIGIN)
+        print_green('打包成功：')
+        print_green(PACK_NEW)
 
-# 日志
-index=PACK_NEW.rindex('.')
-LOG_FILE = PACK_NEW[:index] + '.log'
+    # 清理作案现场
+    restoreENV(UNPACK_DIR)
 
-# 检索母包
-if not os.path.exists(PACK_ORIGIN):
-    print_red(PACK_ORIGIN + '母包文件检索失败！')
-    sys.exit(1)
-
-# 解压目录
-UNPACK_DIR = PACK_NEW[:PACK_NEW.rindex('.')]
-print_green('解包中...')
-print_green(PACK_ORIGIN)
-unzip(PACK_ORIGIN, UNPACK_DIR)
-print_green('成功解压到: ')
-print_green(UNPACK_DIR)
-
-# 检查签名
-print_green('检查签名...')
-checksigner()
-
-# 查找配置文件
-print_green('定位config.json文件...')
-CONFIG_FILE = findconfig(UNPACK_DIR)
-print_green('找到配置文件: ')
-print_green(CONFIG_FILE)
-
-# 写入代理商字段
-print_green('写入代理商字段...')
-writeJson(CONFIG_FILE, 'agent', AGENT_ID)
-
-# 删除旧签名
-print_green('删除签名...')
-removeSign()
-
-####################
-# 安卓重签名
-if isapk(PACK_ORIGIN):
-    # 压缩
-    print_green('重新打包中...')
-    zip_dir(UNPACK_DIR, PACK_NEW)
-    print_green(PACK_NEW)
-    # 签名
-    print_green('重新签名中...')
-    signapk(PACK_NEW)
-
-####################
-# iOS重签名
-elif isipa(PACK_ORIGIN):
-    # 签名
-    print_green('重新签名中...')
-    signipa(PACK_NEW)
-    # 压缩
-    print_green('重新打包中...')
-    zip_dir(UNPACK_DIR, PACK_NEW)
-
-    print_green('打包成功：')
-    print_green(PACK_NEW)
-
-# 清理作案现场
-# restoreENV()
+if __name__ == '__main__':
+    main()
 
