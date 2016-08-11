@@ -84,7 +84,9 @@ def isipa(filename):
 # 重命名
 def newname(prefex, oldname):
     index=oldname.rindex('.')
-    return oldname[:index] + '_' + prefex + oldname[index:]
+    oldpath = os.path.split(oldname)[0]
+    filename = prefex + oldname[index:] 
+    return  os.path.join(oldpath, filename)
 
 ####################
 # 查找config文件
@@ -163,10 +165,24 @@ def main():
 
     ####################
     # 参数解析
-    if len(sys.argv) <> 3:
+    if len(sys.argv) < 2:
         print_red('参数错误')
         print_green('eg. python resign.py 2333 d:/redbird.apk')
         sys.exit(1)
+
+    # 代理商id
+    AGENT_ID = sys.argv[1]
+
+    # 母包 - 包含默认值
+    PACK_ORIGIN = os.path.join(os.getcwd(), 'download/zhixin.apk')
+    if len(sys.argv) > 2:
+        PACK_ORIGIN = sys.argv[2]
+
+    # 签名包名
+    PACK_NEW = newname(AGENT_ID, PACK_ORIGIN)
+
+    ####################
+    # 签名参数
 
     # apk签名
     APK_KEY = os.path.join(os.getcwd(), 'customer-hn787878-20160315.keystore')
@@ -178,15 +194,6 @@ def main():
     IPA_CER = 'iPhone Distribution: Beijing TianRuiDiAn Network Technology Co,Ltd.'
     IPA_ENT = os.path.join(os.getcwd(), 'Entitlements.plist')
     IPA_APP = 'MixProject-mobile.app'
-
-    # 母包
-    PACK_ORIGIN = sys.argv[2]
-
-    # 代理商id
-    AGENT_ID = sys.argv[1]
-
-    # 签名包名
-    PACK_NEW = newname(AGENT_ID, PACK_ORIGIN)
 
     ####################
     # 日志
