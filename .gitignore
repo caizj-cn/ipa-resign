@@ -2,3 +2,4 @@
 *.apk
 *.ipa
 .ipa_resign_temp/
+*.log

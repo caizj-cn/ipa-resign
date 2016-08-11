@@ -174,7 +174,7 @@ def main():
     AGENT_ID = sys.argv[1]
 
     # 母包 - 包含默认值
-    PACK_ORIGIN = os.path.join(os.getcwd(), 'download/zhixin.apk')
+    PACK_ORIGIN = os.path.abspath(os.path.join(os.pardir, 'download/zhixin.apk'))
     if len(sys.argv) > 2:
         PACK_ORIGIN = sys.argv[2]
 
