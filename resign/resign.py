@@ -1,6 +1,7 @@
 # coding=utf-8 
 
 import zipfile
+import shutil
 import sys, os
 import platform
 import json
@@ -33,9 +34,12 @@ def zip_dir(dirname,zipfilename):
 ####################
 # zip解压
 def unzip(src,des): 
-    zfile = zipfile.ZipFile(src,'r')
-    for filename in zfile.namelist() :
-        zfile.extract(filename,des)
+    if isipa(src):
+        status, output = commands.getstatusoutput("unzip " + src + " -d " + des)
+    elif isapk(src):
+        zfile = zipfile.ZipFile(src,'r')
+        for filename in zfile.namelist() :
+            zfile.extract(filename,des)
     return
 
 ####################
@@ -107,10 +111,11 @@ def findconfig(dirname):
 ####################
 # 删除文件夹
 def removeDir(dirname):
-    if isWindows():
-        os.system("rd /s /q " + dirname)
-    else:
-        os.system("rm -rf " + dirname)
+    shutil.rmtree(dirname, True)
+    # if isWindows():
+    #     os.system("rd /s /q " + dirname)
+    # else:
+    #     os.system("rm -rf " + dirname)
 
 ####################
 # 清理作案现场
@@ -155,8 +160,10 @@ def signapk(packname, APK_KEY, APK_PASS, APK_ALIAS, PACK_NEW):
 def signipa(packname, IPA_CER, IPA_ENT, IPA_APP):
     execstr = "/usr/bin/codesign -f -s \"" + IPA_CER + "\" --entitlements " + IPA_ENT + " " + IPA_APP
     os.system(execstr)
+    print_green(execstr)
     print_green('签名完成！')
     execstr = "/usr/bin/codesign --verify " + IPA_APP
+    print_green(execstr)
     print_green('验证签名完成！')
 
 ####################
@@ -226,7 +233,12 @@ def main():
     UNPACK_DIR = PACK_NEW[:PACK_NEW.rindex('.')]
     print_green('解包中...')
     print_green(PACK_ORIGIN)
+
+    if os.path.exists(UNPACK_DIR):
+        removeDir(UNPACK_DIR)
+
     unzip(PACK_ORIGIN, UNPACK_DIR)
+
     print_green('成功解压到: ')
     print_green(UNPACK_DIR)
 
@@ -271,6 +283,7 @@ def main():
                     print_green('找到APP文件:')
                     IPA_APP = os.path.join(root, dirname)
                     print_green(IPA_APP)
+        
         if not os.path.exists(IPA_APP):
             print_red('检索APP文件失败！')
             print_red(IPA_APP)
@@ -337,9 +350,20 @@ def main():
         # 签名
         print_green('重新签名中...')
         signipa(PACK_NEW, IPA_CER, IPA_ENT, IPA_APP)
+
         # 压缩
         print_green('重新打包中...')
+        print_green(UNPACK_DIR)
+
+        # 更改执行路径
+        tmpdir = os.getcwd()
+        os.chdir(UNPACK_DIR)
+
+        # zipdir
         zip_dir(UNPACK_DIR, PACK_NEW)
+
+        # 恢复执行路径
+        os.chdir(tmpdir)
 
         print_green('打包成功：')
         print_green(PACK_NEW)
