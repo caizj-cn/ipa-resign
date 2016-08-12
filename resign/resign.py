@@ -81,6 +81,11 @@ def isipa(filename):
     return 'ipa' in filename.split('.')[-1]
 
 ####################
+# 是否APP
+def isapp(filename):
+    return 'app' in filename.split('.')[-1]
+
+####################
 # 重命名
 def newname(prefex, oldname):
     index=oldname.rindex('.')
@@ -110,7 +115,7 @@ def removeDir(dirname):
 ####################
 # 清理作案现场
 def restoreENV(UNPACK_DIR):
-    print_green('清理作案现场...')
+    print_green('清理临时文件...')
     removeDir(UNPACK_DIR)
 
 ####################
@@ -182,7 +187,7 @@ def main():
     AGENT_ID = sys.argv[1]
 
     # 母包 - 包含默认值
-    PACK_ORIGIN = os.path.join(getpardir(ROOT_PATH), 'download/zhixin.apk')
+    PACK_ORIGIN = os.path.join(getpardir(ROOT_PATH), 'download/zhixin.ipa')
     print_green(sys.path[0])
 
     if len(sys.argv) > 2:
@@ -262,7 +267,7 @@ def main():
 
         for root, dirs, files in os.walk(UNPACK_DIR):
             for dirname in dirs:
-                if IPA_APP == dirname:
+                if isapp(dirname):
                     print_green('找到APP文件:')
                     IPA_APP = os.path.join(root, dirname)
                     print_green(IPA_APP)
