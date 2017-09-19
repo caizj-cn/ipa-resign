@@ -18,4 +18,5 @@ zip -r test.ipa Payload
 
 参考说明：
 1.http://www.jianshu.com/p/15edfe11f8ac
+
 2.http://www.jianshu.com/p/bdbac933c1be
